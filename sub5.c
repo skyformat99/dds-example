@@ -291,13 +291,15 @@ int main (int argc, char *argv[])
         {
             counter++;
 
-            compound_sample_t* compound_samples_ptr = (compound_sample_t*) calloc (1, sizeof(compound_sample_t));
-            compound_samples_ptr->counter = counter;
+            compound_sample_t* compound_samples_ptr = NULL;
 
             for (uint16_t i = 0; i < ws_result_size; i++)
             {
                 if (ws_results[i] != NULL)
                 {
+                    compound_samples_ptr = (compound_sample_t*) calloc (1, sizeof(compound_sample_t));
+                    compound_samples_ptr->counter = counter;
+
                     //printf("h:ws_results[%d]: %d\n", i, reader_status);
                     status = dds_status_take (ws_results[i], &reader_status, DDS_DATA_AVAILABLE_STATUS);
 
@@ -308,6 +310,12 @@ int main (int argc, char *argv[])
                     else if (dds_statuscondition_get (led_reader) == dds_statuscondition_get (ws_results[i]))
                     {
                         compound_samples_ptr->type = led;
+                    }
+                    else
+                    {
+                        free (compound_samples_ptr);
+                        compound_samples_ptr = NULL;
+                        continue;
                     }
 
                     compound_samples_ptr->sample_count = dds_take (
@@ -330,6 +338,7 @@ int main (int argc, char *argv[])
                     else // no sample
                     {
                         free (compound_samples_ptr);
+                        compound_samples_ptr = NULL;
                     }
                 }
             }
